@@ -25,56 +25,140 @@ def load_image(name):
     return image
 
 
+def load_level(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
+def generate_level(level):
+    new_player, x, y = None, None, None
+    player_x, player_y = None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '.':
+                Tree('tree', x, y)
+            elif level[y][x] == '#':
+                Stone('stone', x, y)
+    new_player = Player(player_x, player_y)
+    return new_player, x, y
+
+
 def start_screen():
-    intro_text = ['', '',
-                  " Цель - Преодалеть все препядствия и дойти до конца уровня, не столкнувшись с ними.",
-                  " Чтобы персонаж перепрыгивал препядствие достаточно нажать любую кнопку или клавишу."]
+    global index, images, user
+    user = ''
+    image_paths = ["character1.png", "character2.png", "character3.png"]
+    images = [pygame.transform.scale(load_image(path), (250, 250)) for path in image_paths]
+    image_pos = (360, 180)
+    font = pygame.font.Font(None, 30)
+    button_left = pygame.Rect(200, 310, 100, 50)
+    button_right = pygame.Rect(650, 310, 100, 50)
+    button_start = pygame.Rect(380, 510, 200, 50)
     fon = pygame.transform.scale(load_image('startfon.jpg'), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
     title_font = pygame.font.Font(None, 60)
     title_text = title_font.render("Overcome_Obstacles", True, WHITE)
     title_rect = title_text.get_rect(center=(500, 50))
-    screen.blit(title_text, title_rect)
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
-    for line in intro_text:
-        string_rendered = font.render(line, 1, WHITE)
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-    button_start = pygame.Rect(400, 500, 200, 50)
-    pygame.draw.rect(screen, WHITE, button_start)
-    button_text = font.render("START", True, BLACK)
-    button_text_rect = button_text.get_rect(center=button_start.center)
-    screen.blit(button_text, button_text_rect)
-
+    left_text = font.render("<-", True, BLACK)
+    right_text = font.render("->", True, BLACK)
+    start_text = font.render("START", True, BLACK)
+    button_start_text = start_text.get_rect(center=button_start.center)
+    button_left_text = left_text.get_rect(center=button_left.center)
+    button_right_text = right_text.get_rect(center=button_right.center)
+    text1 = font.render("Цель - Преодалеть все препятствия и дойти до конца уровня, не столкнувшись с ними.", True, WHITE)
+    text_rect1 = text1.get_rect(center=(500, 105))
+    screen.blit(text1, text_rect1)
+    text2 = font.render("Чтобы персонаж перепрыгивал препядствие достаточно нажать любую кнопку или клавишу.", True, WHITE)
+    text_rect2 = text2.get_rect(center=(500, 155))
+    screen.blit(text2, text_rect1)
+    index = 0
     while True:
+        screen.fill(BLACK)
+        screen.blit(fon, (0, 0))
+        screen.blit(title_text, title_rect)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = pygame.mouse.get_pos()
-                if event.type == pygame.MOUSEBUTTONDOWN and button_start.collidepoint(mouse_pos):
-                    return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_start.collidepoint(event.pos):
+                    return index
+                elif button_left.collidepoint(event.pos):
+                    index = (index - 1) % len(images)
+                elif button_right.collidepoint(event.pos):
+                    index = (index + 1) % len(images)
+        if index == 0:
+            user = "character1.png"
+        if index == 1:
+            user = "character2.png"
+        if index == 2:
+            user = "character3.png"
+        screen.blit(text1, text_rect1)
+        screen.blit(text2, text_rect2)
+        screen.blit(images[index], image_pos)
+        pygame.draw.rect(screen, WHITE, button_left)
+        pygame.draw.rect(screen, WHITE, button_right)
+        pygame.draw.rect(screen, WHITE, button_start)
+        screen.blit(left_text, button_left_text)
+        screen.blit(right_text, button_right_text)
+        screen.blit(start_text, button_start_text)
         pygame.display.flip()
         clock.tick(FPS)
 
 
+class Player(pygame.sprite.Sprite):
+
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.transform.scale(load_image(user), (200, 200))
+        self.rect = self.image.get_rect(center=(100, 500))
+        self.speed_x = 5
+        self.jumping = 0.5
+        self.jump_power = -12
+        self.flag = False
+
+    def update(self):
+        self.rect.x += self.speed_x
+        if self.flag:
+            self.speed_y += self.jumping
+            self.rect.y += self.speed_y
+            if self.rect.y >= HEIGHT - self.rect.height:
+                self.rect.y = HEIGHT - self.rect.height
+                self.flag = False
+
+    def jump(self):
+        if not self.flag:
+            self.flag = True
+            self.speed_y = self.jump_power
+
+
+class Tree(pygame.sprite.Sprite):
+    def __init__(self, tile_type, x, y):
+        super().__init__(tree_group, all_sprites)
+
+
+class Stone(pygame.sprite.Sprite):
+    def __init__(self, tile_type, x, y):
+        super().__init__(stone_group, all_sprites)
+
+
+player_group = pygame.sprite.Group()
+stone_group = pygame.sprite.Group()
+tree_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
-player = None
 clock = pygame.time.Clock()
 start_screen()
+player = Player()
+all_sprites.add(player)
+background = pygame.transform.scale(load_image('main_fon.jpg'), (WIDTH, HEIGHT))
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             terminate()
-        if event.type == pygame.KEYDOWN:
-            player.move(event.key)
-    screen.fill(BLACK)
+        if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+            player.jump()
+    screen.blit(background, (0, 0))
     all_sprites.draw(screen)
     all_sprites.update()
     pygame.display.flip()
