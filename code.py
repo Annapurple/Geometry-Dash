@@ -36,12 +36,15 @@ def load_level(filename):
 def generate_level(level):
     new_player, x, y = None, None, None
     player_x, player_y = None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '.':
-                Tree('tree', x, y)
-            elif level[y][x] == '#':
-                Stone('stone', x, y)
+    for x in range(len(level)):
+        if level[x] == '/':
+            Tree('tree', x)
+        elif level[x] == '.':
+            Stone('stone', x)
+        elif level[x] == '#':
+            Stone('bush', x)
+        elif level[x] == '*':
+            Stone('box', x)
     new_player = Player(player_x, player_y)
     return new_player, x, y
 
@@ -106,9 +109,23 @@ def start_screen():
         clock.tick(FPS)
 
 
+def end_screen():
+    fon = pygame.transform.scale(load_image('startfon.jpg'), (WIDTH, HEIGHT))
+    title_font = pygame.font.Font(None, 60)
+    title_text = title_font.render("Overcome_Obstacles", True, WHITE)
+    title_rect = title_text.get_rect(center=(500, 50))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+        screen.blit(title_text, title_rect)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self):
+    def __init__(self, x, y):
         super().__init__()
         self.image = pygame.transform.scale(load_image(user), (200, 200))
         self.rect = self.image.get_rect(center=(100, 500))
@@ -133,25 +150,48 @@ class Player(pygame.sprite.Sprite):
 
 
 class Tree(pygame.sprite.Sprite):
-    def __init__(self, tile_type, x, y):
-        super().__init__(tree_group, all_sprites)
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.transform.scale(load_image("tree.png"), (50, 50))
+        self.rect = self.image.get_rect(topleft=(x, y))
 
 
 class Stone(pygame.sprite.Sprite):
-    def __init__(self, tile_type, x, y):
-        super().__init__(stone_group, all_sprites)
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.transform.scale(load_image("stone.png"), (50, 50))
+        self.rect = self.image.get_rect(topleft=(x, y))
 
 
+class Bush(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.transform.scale(load_image("bush.png"), (50, 50))
+        self.rect = self.image.get_rect(topleft=(x, y))
+
+
+class Box(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.transform.scale(load_image("bush.png"), (50, 50))
+        self.rect = self.image.get_rect(topleft=(x, y))
+
+
+title_images = {'tree': load_image('tree.png'),
+                'stone': load_image('stone.png'),
+                'box': load_image('box.png'),
+                'bush': load_image('bush.png')}
 player_group = pygame.sprite.Group()
 stone_group = pygame.sprite.Group()
 tree_group = pygame.sprite.Group()
+bush_group = pygame.sprite.Group()
+box_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 clock = pygame.time.Clock()
 start_screen()
-player = Player()
+player = Player(0, 100)
 all_sprites.add(player)
 background = pygame.transform.scale(load_image('main_fon.jpg'), (WIDTH, HEIGHT))
-
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
