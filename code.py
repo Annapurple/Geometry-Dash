@@ -109,18 +109,27 @@ def start_screen():
         clock.tick(FPS)
 
 
-def end_screen():
+def end_screen(score):
     fon = pygame.transform.scale(load_image('startfon.jpg'), (WIDTH, HEIGHT))
-    title_font = pygame.font.Font(None, 60)
-    title_text = title_font.render("Overcome_Obstacles", True, WHITE)
-    title_rect = title_text.get_rect(center=(500, 50))
+    font = pygame.font.Font(None, 74)
+    text = font.render(f"Game Over!", True, WHITE)
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 20))
+    score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
     while True:
+        screen.fill(BLACK)
+        screen.blit(fon, (0, 0))
+        screen.blit(text, text_rect)
+        screen.blit(score_text, score_rect)
+        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                terminate()
-        screen.blit(title_text, title_rect)
-        pygame.display.flip()
-        clock.tick(FPS)
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
 
 
 class Player(pygame.sprite.Sprite):
